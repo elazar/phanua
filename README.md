@@ -173,7 +173,7 @@ $container = new \Pimple\Container;
 $container->register($provider);
 ```
 
-Once the Phanua service provider is configured with the necessary parameters, it's possible to use the container it builds independently.
+Once you've configured the Phanua service provider with the necessary parameters, it's possible to use the container it builds independently.
 
 ```php
 <?php
@@ -330,7 +330,7 @@ This interface contains a single method, `isPrimary()`, which receives three par
 2. a `string` containing the name of the component property corresponding to the field; and
 3. an instance of `Jane\Component\OpenApi3\JsonSchema\Model\Schema` representing the property schema.
 
-`isPrimary()` must return a `boolean` value where a value of `true` indicates that the given field is part of the primarty index for the associated table and a value of `false` indicates that it's not.
+`isPrimary()` must return a `boolean` value where a value of `true` indicates that the given field is part of the primary index for the associated table and a value of `false` indicates that it's not.
 
 The implementation of this interface that Phanua uses by default is `Elazar\Phanua\Field\PrimaryResolver`. Its `isPrimary()` method returns `true` if the given property name is `id` or `false` otherwise. This class assumes that the property and column names are the same, which is the case when using the default implementation of `Elazar\Phanua\Field\ColumnResolverInterface` detailed in the ["Column Resolver"](#column-resolver) section above.
 
@@ -347,7 +347,7 @@ This interface contains a single method, `getEntity()`, which receives two param
 1. a `string` containing the name of the OpenAPI component corresponding to the entity; and
 2. an instance of `Jane\Component\OpenApi3\JsonSchema\Model\Schema` representing the component schema.
 
-`getEntity()` must return a populated instance of `Cycle\Schema\Definition\Entity` representing the entity corresponding to the given component.
+`getEntity()` must return a populated instance of `Cycle\Schema\Definition\Entity` representing the entity corresponding to the given component or `null` if it fails to resolve the component to an entity.
 
 The implementation of this interface that Phanua uses by default is `Elazar\Phanua\Entity\EntityResolver`. It composes an implementation of each of `Elazar\Phanua\Entity\RoleResolverInterface` and `Elazar\Phanua\Entity\ClassResolverInterface`, which it uses to determine the entity [role](#role-resolver) and [class](#class-resolver) respectively.
 
@@ -501,7 +501,7 @@ This interface contains a single method, `getField()`, which receives three para
 2. a `string` containing the name of the component property corresponding to the field; and
 3. an instance of `Jane\Component\OpenApi3\JsonSchema\Model\Schema` representing the property schema.
 
-`getField()` must return a populated instance of `Cycle\Schema\Definition\Field` representing the field corresponding to the given property.
+`getField()` must return a populated instance of `Cycle\Schema\Definition\Field` representing the field corresponding to the given property or `null` if it fails to resolve the component to a field.
 
 The implementation of this interface that Phanua uses by default is `Elazar\Phanua\Field\FieldResolver`. It composes an implementation of each of `Elazar\Phanua\Field\ColumnResolverInterface`, `Elazar\Phanua\Field\TypeResolverInterface`, and `Elazar\Phanua\Field\PrimaryResolverInterface`, which it uses to determine the field [column](#column-resolver), [type](#type-resolver), and presence in the [primary index](#primary-resolver) respectively.
 
@@ -725,7 +725,7 @@ $yourContainer[Registry::class] = function () use ($phanuaContainer) {
     // Configure $registry here as needed
     return $registry;
 };
-$phanuaContainer[Registry::class] = fn() => $yourContainer[Registry]::class;
+$phanuaContainer[Registry::class] = fn() => $yourContainer[Registry::class];
 ```
 
 ### Compiler Configuration
