@@ -173,7 +173,7 @@ $container = new \Pimple\Container;
 $container->register($provider);
 ```
 
-Once the Phanua service provider configured with the necessary parameters, it's possible to use the container it builds independently.
+Once the Phanua service provider is configured with the necessary parameters, it's possible to use the container it builds independently.
 
 ```php
 <?php
