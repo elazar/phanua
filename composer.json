@@ -1,0 +1,40 @@
+{
+    "name": "elazar/phanua",
+    "description": "Builds Cycle ORM schemas from OpenAPI 3 component schemas",
+    "type": "library",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=7.4",
+        "cycle/orm": "^1.5",
+        "cycle/schema-builder": "^1.2",
+        "jane-php/open-api-3": "^7.1",
+        "pimple/pimple": "^3.4",
+        "psr/container": "^1",
+        "psr/log": "^1.1"
+    },
+    "require-dev": {
+        "ext-pdo_sqlite": "*",
+        "friendsofphp/php-cs-fixer": "^3.0",
+        "mockery/mockery": "^1.4",
+        "pestphp/pest": "^1.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "Elazar\\Phanua\\": "src/"
+        }
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Matthew Turland",
+            "email": "me@matthewturland.com"
+        }
+    ],
+    "config": {
+        "sort-packages": true
+    },
+    "scripts": {
+        "cs": "php-cs-fixer fix",
+        "test": "XDEBUG_MODE=coverage pest --coverage"
+    }
+}
