@@ -314,6 +314,31 @@ $container[TypeResolver::class] = new TypeResolver(
 
 To override the default type resolver implementation with your own, add an entry to your container using the key `Elazar\Phanua\Field\TypeResolverInterface` and have it resolve to an instance of a class that implements the interface.
 
+If you want to use the default type resolver, your own resolver, or another resolver together, you can compose them using `Elazar\Phanua\Field\CompositeFieldResolver`, which will use resolvers in turn until one returns a type.
+
+```php
+<?php
+
+use Elazar\Phanua\Field\CompositeTypeResolver;
+use Elazar\Phanua\Field\TypeResolver;
+use Elazar\Phanua\Field\TypeResolverInterface;
+use My\CustomTypeResolver;
+
+// If you want your resolver to be tried first:
+$container[TypeResolverInterface::class] = new CompositeTypeResolver(
+    new CustomTypeResolver(),
+    new TypeResolver(),
+);
+
+// If you want the default resolver to be tried first:
+$container[TypeResolverInterface::class] = new CompositeTypeResolver(
+    new TypeResolver(
+        null // Required for CompositeTypeResolver to fall back to your resolver
+    ),
+    new CustomTypeResolver(),
+);
+```
+
 ### Primary Resolver
 
 Each table must have a [primary index](https://cycle-orm.dev/docs/advanced-declaration#primary-index) on one or more columns for a compiled Cycle ORM schema to include it.
