@@ -90,7 +90,7 @@ it('does not resolve an excluded field', function ($field) {
         $this->columnResolver,
         getPrimaryResolver(),
         getTypeResolver(),
-        [$field]
+        fn (string $property): bool => $property === $field
     );
 
     $schema = new Schema();

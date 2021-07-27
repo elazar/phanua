@@ -12,29 +12,35 @@ class EntityResolver implements EntityResolverInterface
     private ClassResolverInterface $classResolver;
 
     /**
-     * @var string[]
+     * @var callable|null
      */
-    private array $exclude;
+    private $filterCallback;
 
     /**
-     * @param string[] $exclude
+     * @param callable|null $filterCallback
      */
     public function __construct(
         RoleResolverInterface $roleResolver,
         ClassResolverInterface $classResolver,
-        array $exclude = []
+        $filterCallback = null
     ) {
         $this->roleResolver = $roleResolver;
         $this->classResolver = $classResolver;
-        $this->exclude = $exclude;
+        $this->filterCallback = $filterCallback;
     }
 
     public function getEntity(
         string $componentName,
         Schema $componentSchema
     ): ?Entity {
-        if (in_array($componentName, $this->exclude)) {
-            return null;
+        if (is_callable($this->filterCallback)) {
+            $include = ($this->filterCallback)(
+                $componentName,
+                $componentSchema
+            );
+            if ($include === false) {
+                return null;
+            }
         }
 
         $entity = new Entity();

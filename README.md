@@ -376,22 +376,29 @@ This interface contains a single method, `getEntity()`, which receives two param
 
 The implementation of this interface that Phanua uses by default is `Elazar\Phanua\Entity\EntityResolver`. It composes an implementation of each of `Elazar\Phanua\Entity\RoleResolverInterface` and `Elazar\Phanua\Entity\ClassResolverInterface`, which it uses to determine the entity [role](#role-resolver) and [class](#class-resolver) respectively.
 
-It also provides for the exclusion of specific components from having an entity in the generated schema, such as those components where the corresponding entity would not have a [primary index](#primary-resolver). The easiest way to exclude one or more components is by using the service provider: by default, it handles injecting a list of components to exclude into `EntityResolver`.
+It also provides for the exclusion of specific components from having an entity in the generated schema, such as those components where the corresponding entity would not have a [primary index](#primary-resolver). The easiest way to exclude one or more components is by using the service provider: by default, it handles injecting a callback to filter components into `EntityResolver`.
 
 ```php
 <?php
 
-$excludedComponents = [
-    'component1',
-    'component2',
-    // ...
-];
+use Jane\Component\OpenApi3\JsonSchema\Model\Schema;
+
+$componentFilter = fn (
+    string $componentName,
+    Schema $componentSchema
+): bool =>
+    !in_array($componentName, [
+        // These components are excluded from the schema
+        'component1',
+        'component2',
+        // ...
+    ]);
 
 $provider = (new \Elazar\Phanua\Service\Provider)
-    ->withExcludedComponents($excludedComponents);
+    ->withComponentFilter($componentFilter);
 ```
 
-You can also exclude components by [overriding](#overriding-dependencies) the `EntityResolver` instance used by default with one that includes the names of components to exclude in the `$exclude` constructor parameter of `EntityResolver` or does something similar for your own entity resolver implementation. The example below does this using a Pimple container.
+You can also exclude components by [overriding](#overriding-dependencies) the `EntityResolver` instance used by default with one that includes a callback to filter entities in the `$filterCallback` constructor parameter of `EntityResolver` or does something similar for your own entity resolver implementation. The example below does this using a Pimple container.
 
 ```php
 <?php
@@ -403,6 +410,7 @@ use Elazar\Phanua\{
     Entity\RoleResolverInterface,
     Service\Provider
 };
+use Jane\Component\OpenApi3\JsonSchema\Model\Schema;
 
 $provider = new Provider;
 
@@ -428,7 +436,13 @@ $yourContainer = new \Pimple\Container;
 $yourContainer[EntityResolverInterface::class] = fn() => new EntityResolver(
     $phanuaContainer[RoleResolverInterface::class],
     $phanuaContainer[ClassResolverInterface::class],
-    [ /* strings containing names of components to exclude go here */ ]
+    function (
+        string $componentName,
+        string $propertyName,
+        Schema $propertySchema
+    ): bool {
+        /* return TRUE to include or FALSE to exclude component */
+    }
 );
 
 /**
@@ -532,22 +546,29 @@ The implementation of this interface that Phanua uses by default is `Elazar\Phan
 
 It also handles setting other options for the field, such as its default value and whether it's nullable based on corresponding [`default`](https://swagger.io/specification/#properties) and [`nullable`](https://swagger.io/specification/#fixed-fields-20) values from the given property schema.
 
-`FieldResolver` also provides for the exclusion of specific properties from having a field in the generated schema. The easiest way to exclude one or more properties is by using the service provider: by default, it handles injecting a list of properties to exclude into `FieldResolver`.
+`FieldResolver` also provides for the exclusion of specific properties from having a field in the generated schema. The easiest way to exclude one or more properties is by using the service provider: by default, it handles injecting a callback to filte properties into `FieldResolver`.
 
 ```php
 <?php
 
-$excludedProperties = [
-    'propertyName',
-    'component.propertyName',
-    // ...
-];
+use Jane\Component\OpenApi3\JsonSchema\Model\Schema;
+
+$propertyFilter = fn (
+    string $componentName,
+    string $propertyName,
+    Schema $propertySchema
+): bool =>
+    // Exclude all properties with this name
+    $property !== 'propertyName'
+
+    // Exclude the property only in the specified component
+    && "$component.$property" !== 'componentName.propertyName';
 
 $provider = (new \Elazar\Phanua\Service\Provider)
-    ->withExcludedProperties($excludedProperties);
+    ->withPropertyFilter($propertyFilter);
 ```
 
-You can also exclude properties by [overriding](#overriding-dependencies) the `FieldResolver` instance used by default with one that includes the names of properties to exclude in the `$exclude` constructor parameter of `FieldResolver`. The example below does this using a Pimple container.
+You can also exclude properties by [overriding](#overriding-dependencies) the `FieldResolver` instance used by default with one that includes a callback to filter properties in the `$filterCallback` constructor parameter of `FieldResolver`. The example below does this using a Pimple container.
 
 ```php
 <?php
@@ -560,6 +581,7 @@ use Elazar\Phanua\{
     Field\TypeResolverInterface,
     Service\Provider
 };
+use Jane\Component\OpenApi3\JsonSchema\Model\Schema;
 
 $provider = new Provider;
 
@@ -586,11 +608,13 @@ $yourContainer[FieldResolverInterface::class] = fn() => new FieldResolver(
     $phanuaContainer[ColumnResolverInterface::class],
     $phanuaContainer[PrimaryResolverInterface::class],
     $phanuaContainer[TypeResolverInterface::class],
-    [ // names of properties to exclude go here, e.g.
-        'propertyName',
-        'componentName.propertyName',
-        // ...
-    ]
+    function (
+        string $componentName,
+        string $propertyName,
+        Schema $propertySchema
+    ): bool {
+        /* return TRUE to include or FALSE to exclude property */
+    }
 );
 
 /**

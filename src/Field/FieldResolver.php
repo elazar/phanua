@@ -14,18 +14,21 @@ class FieldResolver implements FieldResolverInterface
 
     private TypeResolverInterface $typeResolver;
 
-    private array $exclude;
+    /**
+     * @var callable|null
+     */
+    private $filterCallback;
 
     public function __construct(
         ColumnResolverInterface $columnResolver,
         PrimaryResolverInterface $primaryResolver,
         TypeResolverInterface $typeResolver,
-        array $exclude = []
+        $filterCallback = null
     ) {
         $this->columnResolver = $columnResolver;
         $this->primaryResolver = $primaryResolver;
         $this->typeResolver = $typeResolver;
-        $this->exclude = $exclude;
+        $this->filterCallback = $filterCallback;
     }
 
     /**
@@ -36,9 +39,15 @@ class FieldResolver implements FieldResolverInterface
         string $propertyName,
         Schema $propertySchema
     ): ?Field {
-        if (in_array($propertyName, $this->exclude)
-            || in_array("$componentName.$propertyName", $this->exclude)) {
-            return null;
+        if (is_callable($this->filterCallback)) {
+            $include = ($this->filterCallback)(
+                $componentName,
+                $propertyName,
+                $propertySchema
+            );
+            if ($include === false) {
+                return null;
+            }
         }
 
         $field = new Field();

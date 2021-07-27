@@ -63,12 +63,22 @@ function getDatabaseConfig(): array
     ];
 }
 
+/**
+ * @param string[] $values
+ */
+function getFilterCallback(array $values): callable
+{
+    return fn (string $value): bool => in_array($value, $values);
+}
+
 function getMinimalProvider(Provider $provider): Provider
 {
     return $provider
         ->withNamespace('\\Foo')
         ->withDatabaseConfig(getDatabaseConfig())
-        ->withExcludedComponents(['Pets', 'Error']);
+        ->withComponentFilter(
+            getFilterCallback(['Pet'])
+        );
 }
 
 function getModifiedOpenApiSpec(callable $callback): string
@@ -117,7 +127,9 @@ beforeEach(function () {
 
 it('fails to load without a namespace', function () {
     $provider = $this->provider
-        ->withExcludedComponents(['Pets', 'Error']);
+        ->withComponentFilter(
+            getFilterCallback(['Pet'])
+        );
     getSchemaBuilder($provider);
 })
 ->throws(TypeError::class);
@@ -125,7 +137,9 @@ it('fails to load without a namespace', function () {
 it('fails to load without default dependencies', function ($key) {
     $container = $this->provider
         ->withNamespace('\\Foo')
-        ->withExcludedComponents(['Pets', 'Error'])
+        ->withComponentFilter(
+            getFilterCallback(['Pet'])
+        )
         ->getContainer();
     unset($container[$key]);
     getSchemaBuilder($container);
@@ -136,7 +150,9 @@ it('fails to load without default dependencies', function ($key) {
 it('fails to build without database configuration', function () {
     $provider = $this->provider
         ->withNamespace('\\Foo')
-        ->withExcludedComponents(['Pets', 'Error']);
+        ->withComponentFilter(
+            getFilterCallback(['Pet'])
+        );
     buildSchema($provider);
 })
 ->throws(DBALException::class);
@@ -159,7 +175,7 @@ it('fails to build a specification without components', function () {
 
 it('fails to build a specification with no resolvable components', function () {
     $provider = getMinimalProvider($this->provider)
-        ->withExcludedComponents(['Pet', 'Pets', 'Error']);
+        ->withComponentFilter(fn () => false);
     buildSchema($provider);
 })
 ->throws(

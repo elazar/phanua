@@ -106,28 +106,28 @@ it('accepts a database', function () {
     expect($database)->toBe($expected);
 });
 
-it('has no excluded components by default', function () {
-    $default = $this->provider->getExcludedComponents();
-    expect($default)->toBeArray()->toBeEmpty();
+it('has no component filter by default', function () {
+    $default = $this->provider->getComponentFilter();
+    expect($default)->toBeNull();
 });
 
-it('accepts excluded components', function () {
-    $expected = ['foo'];
-    $provider = $this->provider->withExcludedComponents($expected);
-    $excludedComponents = $provider->getExcludedComponents();
-    expect($excludedComponents)->toBe($expected);
+it('accepts a component filter', function () {
+    $expected = fn () => false;
+    $provider = $this->provider->withComponentFilter($expected);
+    $componentFilter = $provider->getComponentFilter();
+    expect($componentFilter)->toBe($expected);
 });
 
-it('has no excluded properties by default', function () {
-    $default = $this->provider->getExcludedProperties();
-    expect($default)->toBeArray()->toBeEmpty();
+it('has no property filter by default', function () {
+    $default = $this->provider->getPropertyFilter();
+    expect($default)->toBeNull();
 });
 
-it('accepts excluded properties', function () {
-    $expected = ['foo'];
-    $provider = $this->provider->withExcludedProperties($expected);
-    $excludedProperties = $provider->getExcludedProperties();
-    expect($excludedProperties)->toBe($expected);
+it('accepts a property filter', function () {
+    $expected = fn () => false;
+    $provider = $this->provider->withPropertyFilter($expected);
+    $propertyFilter = $provider->getPropertyFilter();
+    expect($propertyFilter)->toBe($expected);
 });
 
 it('accepts Jane configuration', function () {

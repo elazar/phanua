@@ -72,9 +72,15 @@ class Provider implements ServiceProviderInterface
 
     private ?string $database = null;
 
-    private array $excludedComponents = [];
+    /**
+     * @var callable|null
+     */
+    private $componentFilter = null;
 
-    private array $excludedProperties = [];
+    /**
+     * @var callable|null
+     */
+    private $propertyFilter = null;
 
     public function getDelegateContainer(): ?ContainerInterface
     {
@@ -153,38 +159,40 @@ class Provider implements ServiceProviderInterface
     }
 
     /**
-     * @return string[]
+     * @return callable|null
      */
-    public function getExcludedComponents(): array
+    public function getComponentFilter()
     {
-        return $this->excludedComponents;
+        return $this->componentFilter;
     }
 
     /**
-     * @param string[] $excludedComponents Names of components to exclude when
-     *        generating a schema
+     * @param callable $componentFilter Callback that accepts a string
+     *        containing the name of a component and returns a boolean value
+     *        indicating whether the component should be included in the schema
      */
-    public function withExcludedComponents(array $excludedComponents): self
+    public function withComponentFilter(callable $componentFilter): self
     {
-        return $this->with('excludedComponents', $excludedComponents);
+        return $this->with('componentFilter', $componentFilter);
     }
 
     /**
-     * @return string[]
+     * @return callable|null
      */
-    public function getExcludedProperties(): array
+    public function getPropertyFilter()
     {
-        return $this->excludedProperties;
+        return $this->propertyFilter;
     }
 
     /**
-     * @param string[] $excludedProperties Names of properties to exclude when
-     *        generating a schema, e.g. 'propertyName' or
-     *        'componentName.propertyName'
+     * @param callable $componentFilter Callback that accepts two strings
+     *        containing the names of a component and property and returns a
+     *        boolean value indicating whether the property should be included
+     *        in the schema
      */
-    public function withExcludedProperties(array $excludedProperties): self
+    public function withPropertyFilter(callable $propertyFilter): self
     {
-        return $this->with('excludedProperties', $excludedProperties);
+        return $this->with('propertyFilter', $propertyFilter);
     }
 
     /**
@@ -263,7 +271,7 @@ class Provider implements ServiceProviderInterface
             fn () => new EntityResolver(
                 $c[RoleResolverInterface::class],
                 $c[ClassResolverInterface::class],
-                $this->getExcludedComponents()
+                $this->getComponentFilter()
             );
 
         $c[FieldResolverInterface::class] =
@@ -271,7 +279,7 @@ class Provider implements ServiceProviderInterface
                 $c[ColumnResolverInterface::class],
                 $c[PrimaryResolverInterface::class],
                 $c[TypeResolverInterface::class],
-                $this->getExcludedProperties()
+                $this->getPropertyFilter()
             );
 
         $c[NameResolverInterface::class] =

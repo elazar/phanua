@@ -5,7 +5,7 @@ use Elazar\Phanua\Entity\EntityResolver;
 use Elazar\Phanua\Entity\RoleResolverInterface;
 use Jane\Component\OpenApi3\JsonSchema\Model\Schema;
 
-function getEntityResolver(array $exclude = []): EntityResolver
+function getEntityResolver($filterCallback = null): EntityResolver
 {
     $roleResolver = mock(RoleResolverInterface::class);
     $roleResolver
@@ -22,7 +22,7 @@ function getEntityResolver(array $exclude = []): EntityResolver
     return new EntityResolver(
         $roleResolver,
         $classResolver,
-        $exclude
+        $filterCallback
     );
 }
 
@@ -34,7 +34,9 @@ it('resolves an entity', function () {
 });
 
 it('does not resolve an excluded entity', function () {
-    $resolver = getEntityResolver(['foo']);
+    $resolver = getEntityResolver(
+        fn (string $component): bool => $component !== 'foo'
+    );
     $entity = $resolver->getEntity('foo', new Schema());
     expect($entity)->toBeNull();
 });
