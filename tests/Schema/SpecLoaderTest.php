@@ -11,13 +11,13 @@ beforeEach(function () {
 });
 
 it('fails to parse an invalid specification', function () {
-    $rawSpec = substr(file_get_contents(JSON_OPENAPI_SPEC_PATH), 0, -1);
+    $rawSpec = substr(file_get_contents(PETSTORE_JSON_SPEC_PATH), 0, -1);
     $openApiSpecPath = createTempFile($rawSpec);
     $this->loader->load($openApiSpecPath);
 })
 ->throws(Exception::class);
 
 it('parses a valid specification', function () {
-    $openApiSpec = $this->loader->load(JSON_OPENAPI_SPEC_PATH);
+    $openApiSpec = $this->loader->load(PETSTORE_JSON_SPEC_PATH);
     expect($openApiSpec)->toBeInstanceOf(OpenApi::class);
 });

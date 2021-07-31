@@ -12,6 +12,7 @@ use Elazar\Phanua\Entity\EntityResolverInterface;
 use Elazar\Phanua\Entity\TableResolverInterface;
 use Elazar\Phanua\Field\FieldResolverInterface;
 use Elazar\Phanua\Field\NameResolverInterface;
+use Elazar\Phanua\Field\PrimaryResolverInterface;
 use Elazar\Phanua\Schema\Builder;
 use Elazar\Phanua\Schema\Exception;
 use Elazar\Phanua\Service\Provider;
@@ -83,7 +84,7 @@ function getMinimalProvider(Provider $provider): Provider
 
 function getModifiedOpenApiSpec(callable $callback): string
 {
-    $rawSpec = json_decode(file_get_contents(JSON_OPENAPI_SPEC_PATH));
+    $rawSpec = json_decode(file_get_contents(PETSTORE_JSON_SPEC_PATH));
     $contents = json_encode($callback($rawSpec));
     return createTempFile($contents);
 }
@@ -103,7 +104,7 @@ function getSchemaBuilder($providerOrContainer): Builder
  * @param Provider|Container $providerOrContainer
  * @param string|string[] $openApiSpecPaths
  */
-function buildSchema($providerOrContainer, $openApiSpecPaths = [JSON_OPENAPI_SPEC_PATH]): CycleSchema
+function buildSchema($providerOrContainer, $openApiSpecPaths = [PETSTORE_JSON_SPEC_PATH]): CycleSchema
 {
     return getSchemaBuilder($providerOrContainer)
         ->buildSchema($openApiSpecPaths);
@@ -115,10 +116,10 @@ dataset('dependencies', function () {
     return $container->keys();
 });
 
-expect()->extend('toBeValidSchema', function () {
+expect()->extend('toContainEntity', function (string $entity) {
     $schema = $this->value;
     expect($schema)->toBeInstanceOf(CycleSchema::class);
-    expect($schema->defines('Pet'))->toBeTrue();
+    expect($schema->defines($entity))->toBeTrue();
 });
 
 beforeEach(function () {
@@ -194,53 +195,53 @@ it('fails to build a specification if an expected primary key is missing', funct
 it('builds a schema with required configuration', function () {
     $provider = getMinimalProvider($this->provider);
     $schema = buildSchema($provider);
-    expect($schema)->toBeValidSchema();
+    expect($schema)->toContainEntity('Pet');
 });
 
 it('builds an ORM with required configuration', function () {
     $provider = getMinimalProvider($this->provider);
     $schemaBuilder = getSchemaBuilder($provider);
-    $orm = $schemaBuilder->buildOrm([JSON_OPENAPI_SPEC_PATH]);
+    $orm = $schemaBuilder->buildOrm([PETSTORE_JSON_SPEC_PATH]);
     expect($orm)->toBeInstanceOf(ORM::class);
-    expect($orm->getSchema())->toBeValidSchema();
+    expect($orm->getSchema())->toContainEntity('Pet');
 });
 
 it('builds a schema with one file passed as a string', function () {
     $provider = getMinimalProvider($this->provider);
-    $schema = buildSchema($provider, JSON_OPENAPI_SPEC_PATH);
-    expect($schema)->toBeValidSchema();
+    $schema = buildSchema($provider, PETSTORE_JSON_SPEC_PATH);
+    expect($schema)->toContainEntity('Pet');
 });
 
 it('builds a schema for a YAML specification', function () {
     $provider = getMinimalProvider($this->provider);
-    $schema = buildSchema($provider, YAML_OPENAPI_SPEC_PATH);
-    expect($schema)->toBeValidSchema();
+    $schema = buildSchema($provider, PETSTORE_YAML_SPEC_PATH);
+    expect($schema)->toContainEntity('Pet');
 });
 
 it('builds a schema with failed resolution of a relative property', function () {
-    $primaryResolver = mock(PrimaryResolverInterface::class);
-    $primaryResolver
-        ->shouldReceive('isPrimary')
-        ->andReturnUsing(
-            function (
-                string $componentName,
-                string $propertyName,
-                JaneSchema $propertySchema
-            ): bool {
-                return in_array($propertyName, [
-                    'id',
-                    'code',
-                ]);
-            }
-        );
-    $container = getMinimalProvider($this->provider)
-        ->getContainer();
+    $container = getMinimalProvider($this->provider)->getContainer();
     $container[FieldResolverInterface::class] = fn () => getFieldResolver(
         fn (string $propertyName): bool => $propertyName === 'tag'
     );
-    $container[PrimaryResolverInterface::class] = fn () => $primaryResolver;
+    $container[PrimaryResolverInterface::class] = function () {
+        $primaryResolver = mock(PrimaryResolverInterface::class);
+        $primaryResolver
+            ->shouldReceive('isPrimary')
+            ->andReturnUsing(
+                function (
+                    string $componentName,
+                    string $propertyName
+                ): bool {
+                    return in_array($propertyName, [
+                        'id',
+                        'code',
+                    ]);
+                }
+            );
+        return $primaryResolver;
+    };
     $schema = buildSchema($container);
-    expect($schema)->toBeValidSchema();
+    expect($schema)->toContainEntity('Pet');
     $columns = array_values($schema->define('Pet', CycleSchema::COLUMNS));
     expect($columns)->toMatchArray(['id', 'name']);
 });
