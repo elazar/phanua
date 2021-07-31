@@ -256,6 +256,9 @@ class Provider implements ServiceProviderInterface
         // elazar/phanua
 
         $c[ClassResolverInterface::class] =
+            fn () => $c[ClassResolver::class];
+
+        $c[ClassResolver::class] =
             fn () => new ClassResolver(
                 $c[Naming::class],
                 $this->getNamespace()
