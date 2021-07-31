@@ -3,6 +3,9 @@
 use Elazar\Phanua\Field\TypeResolver;
 use Jane\Component\OpenApi3\JsonSchema\Model\Schema;
 
+/**
+ * @param array<string, mixed> $options
+ */
 function getPropertySchema(string $type, array $options): Schema
 {
     $schema = new Schema();

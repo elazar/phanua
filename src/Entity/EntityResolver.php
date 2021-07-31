@@ -12,12 +12,12 @@ class EntityResolver implements EntityResolverInterface
     private ClassResolverInterface $classResolver;
 
     /**
-     * @var callable|null
+     * @var null|callable(string, Schema): bool
      */
     private $filterCallback;
 
     /**
-     * @param callable|null $filterCallback
+     * @param null|callable(string, Schema): bool $filterCallback
      */
     public function __construct(
         RoleResolverInterface $roleResolver,

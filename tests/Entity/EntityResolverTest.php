@@ -1,10 +1,14 @@
 <?php
 
+use Cycle\Schema\Definition\Entity;
 use Elazar\Phanua\Entity\ClassResolverInterface;
 use Elazar\Phanua\Entity\EntityResolver;
 use Elazar\Phanua\Entity\RoleResolverInterface;
 use Jane\Component\OpenApi3\JsonSchema\Model\Schema;
 
+/**
+ * @param null|callable(string, Schema): bool $filterCallback
+ */
 function getEntityResolver($filterCallback = null): EntityResolver
 {
     $roleResolver = mock(RoleResolverInterface::class);
@@ -29,6 +33,8 @@ function getEntityResolver($filterCallback = null): EntityResolver
 it('resolves an entity', function () {
     $resolver = getEntityResolver();
     $entity = $resolver->getEntity('foo', new Schema());
+    expect($entity)->toBeInstanceOf(Entity::class);
+    /** @var Entity $entity */
     expect($entity->getRole())->toBe('role');
     expect($entity->getClass())->toBe('class');
 });

@@ -16,7 +16,8 @@
         "ext-pdo_sqlite": "*",
         "friendsofphp/php-cs-fixer": "^3.0",
         "mockery/mockery": "^1.4",
-        "pestphp/pest": "^1.8"
+        "pestphp/pest": "^1.8",
+        "phpstan/phpstan": "^0.12.94"
     },
     "autoload": {
         "psr-4": {
@@ -34,6 +35,7 @@
         "sort-packages": true
     },
     "scripts": {
+        "analyze": "phpstan analyze -c .phpstan.neon",
         "cs": "php-cs-fixer fix",
         "test": "XDEBUG_MODE=coverage pest --coverage"
     }

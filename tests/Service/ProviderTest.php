@@ -71,9 +71,12 @@ it('accepts an OpenAPI spec path', function () {
 });
 
 it('has no namespace by default', function () {
-    $default = $this->provider->getNamespace();
-    expect($default)->toBeNull();
-});
+    $this->provider->getNamespace();
+})
+->throws(
+    Exception::class,
+    'No namespace provided for generated Jane model files'
+);
 
 it('accepts a namespace', function () {
     $expected = '\\Foo';
@@ -135,13 +138,8 @@ it('accepts Jane configuration', function () {
     expect($provider)->toEqualCanonicalizing($this->provider);
 
     $openApiFile = 'path/to/spec.yaml';
-    $provider = $this->provider->withJaneConfiguration([
-        'openapi-file' => $openApiFile,
-    ]);
-    expect($provider->getOpenApiSpecPath())->toBe($openApiFile);
-    expect($provider->getNamespace())->toBeNull();
-
     $namespace = '\\Foo';
+
     $provider = $this->provider->withJaneConfiguration([
         'namespace' => $namespace,
     ]);

@@ -67,6 +67,8 @@ class Provider implements ServiceProviderInterface
     /**
      * This property defaults to an empty array to make the resulting thrown
      * exception more informative about the root cause.
+     *
+     * @var array<string, mixed>
      */
     private array $databaseConfig = [];
 
@@ -117,6 +119,9 @@ class Provider implements ServiceProviderInterface
 
     public function getNamespace(): ?string
     {
+        if ($this->namespace === null) {
+            throw Exception::missingNamespace();
+        }
         return $this->namespace;
     }
 
@@ -129,13 +134,16 @@ class Provider implements ServiceProviderInterface
         return $this->with('namespace', $namespace);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getDatabaseConfig(): array
     {
         return $this->databaseConfig;
     }
 
     /**
-     * @param array $databaseConfig Cycle ORM DBAL configuration
+     * @param array<string, mixed> $databaseConfig Cycle ORM DBAL configuration
      * @see https://cycle-orm.dev/docs/basic-connect#instantiate-dbal
      */
     public function withDatabaseConfig(array $databaseConfig): self
@@ -185,7 +193,7 @@ class Provider implements ServiceProviderInterface
     }
 
     /**
-     * @param callable $componentFilter Callback that accepts two strings
+     * @param callable $propertyFilter Callback that accepts two strings
      *        containing the names of a component and property and returns a
      *        boolean value indicating whether the property should be included
      *        in the schema
@@ -196,8 +204,9 @@ class Provider implements ServiceProviderInterface
     }
 
     /**
-     * @param string|array $config Array containing Jane configuration or a
-     *        string containing the path to a Jane configuration file
+     * @param string|array<string, string> $config Array containing Jane
+     *        configuration or a string containing the path to a Jane configuration
+    *         file
      */
     public function withJaneConfiguration($config): self
     {
@@ -225,6 +234,7 @@ class Provider implements ServiceProviderInterface
      * dependencies to a \Pimple\Container instance.
      *
      * @see https://github.com/silexphp/Pimple#extending-a-container
+     * @return void
      */
     public function register(Container $c)
     {

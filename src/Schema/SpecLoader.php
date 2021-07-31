@@ -5,6 +5,8 @@ namespace Elazar\Phanua\Schema;
 use Psr\Log\LoggerInterface;
 use Jane\Component\OpenApi3\JsonSchema\Model\OpenApi;
 use Jane\Component\OpenApi3\SchemaParser\SchemaParser;
+use Jane\Component\OpenApiCommon\Exception\CouldNotParseException;
+use Jane\Component\OpenApiCommon\Exception\OpenApiVersionSupportException;
 
 class SpecLoader implements SpecLoaderInterface
 {
@@ -38,13 +40,15 @@ class SpecLoader implements SpecLoaderInterface
             ]);
 
             return $spec;
-        } catch (\Exception $e) {
-            $error = Exception::openApiSpecParsingFailed($openApiSpecPath, $e);
-            $this->logger->error('OpenAPI specification cannot be parsed', [
-                'path' => $openApiSpecPath,
-                'error' => $error,
-            ]);
-            throw $error;
+        } catch (CouldNotParseException $e) {
+        } catch (OpenApiVersionSupportException $e) {
         }
+
+        $error = Exception::openApiSpecParsingFailed($openApiSpecPath, $e);
+        $this->logger->error('OpenAPI specification cannot be parsed', [
+            'path' => $openApiSpecPath,
+            'error' => $error,
+        ]);
+        throw $error;
     }
 }

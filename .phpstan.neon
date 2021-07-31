@@ -1,0 +1,36 @@
+parameters:
+
+	level: 8
+
+	paths:
+		- src
+		- tests
+
+	scanFiles:
+
+		# Pest handles loading custom helpers only when running tests
+		# @see https://pestphp.com/docs/helpers#usage
+		- tests/Pest.php
+
+		# Mockery doesn't autoload its helper functions
+		- vendor/mockery/mockery/library/helpers.php
+
+	ignoreErrors:
+
+		# Pest implicitly binds $this to the current test case
+		# @see https://pestphp.com/docs/underlying-test-case
+		-
+			message: '#^Undefined variable: \$this$#'
+			paths:
+				- tests/*
+
+		# Pest custom expectations are dynamic and not conducive static analysis
+		# @see https://pestphp.com/docs/expectations#custom-expectations
+		-
+			message: '#Call to an undefined method Pest\\Expectation|Pest\\Support\\Extendable::#'
+			paths:
+				- tests/*
+
+		# Classes under the Jane\Component\OpenApi3\JsonSchema\Model namespace
+		# extend \ArrayObject for no obvious reason.
+		- '#no value type specified in iterable type Jane\\Component\\OpenApi3\\JsonSchema\\Model\\#'

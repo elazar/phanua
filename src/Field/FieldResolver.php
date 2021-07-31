@@ -15,10 +15,13 @@ class FieldResolver implements FieldResolverInterface
     private TypeResolverInterface $typeResolver;
 
     /**
-     * @var callable|null
+     * @var null|callable(string, string, Schema)
      */
     private $filterCallback;
 
+    /**
+     * @param null|callable(string, string, Schema): bool $filterCallback
+     */
     public function __construct(
         ColumnResolverInterface $columnResolver,
         PrimaryResolverInterface $primaryResolver,

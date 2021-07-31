@@ -18,7 +18,13 @@ define('PETSTORE_YAML_SPEC_PATH', __DIR__ . '/_files/petstore.yaml');
 
 function createTempFile(string $contents): string
 {
-    $specFile = tempnam(sys_get_temp_dir(), time());
+    $tempDir = sys_get_temp_dir();
+    $specFile = tempnam($tempDir, (string) time());
+    if ($specFile === false) {
+        throw new \RuntimeException(
+            "Unable to create temporary file in $tempDir"
+        );
+    }
     file_put_contents($specFile, $contents);
     register_shutdown_function(fn () => unlink($specFile));
     return $specFile;

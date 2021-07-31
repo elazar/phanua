@@ -5,6 +5,7 @@ namespace Elazar\Phanua\Schema;
 use ArrayObject;
 
 use Cycle\ORM\ORM;
+use Cycle\ORM\ORMInterface;
 use Cycle\ORM\Schema as CycleSchema;
 
 use Cycle\Schema\Compiler;
@@ -20,6 +21,7 @@ use Elazar\Phanua\Field\NameResolverInterface;
 
 use Jane\Component\OpenApi3\JsonSchema\Model\Components;
 use Jane\Component\OpenApi3\JsonSchema\Model\OpenApi;
+use Jane\Component\OpenApi3\JsonSchema\Model\Reference;
 use Jane\Component\OpenApi3\JsonSchema\Model\Schema as JaneSchema;
 
 use Psr\Log\LoggerInterface;
@@ -68,7 +70,7 @@ class Builder
      * @param string|string[] $openApiSpecPaths Path to one or more OpenAPI
      *        specification files
      */
-    public function buildOrm($openApiSpecPaths): ORM
+    public function buildOrm($openApiSpecPaths): ORMInterface
     {
         return $this->orm->withSchema(
             $this->buildSchema($openApiSpecPaths)
@@ -126,7 +128,7 @@ class Builder
     }
 
     /**
-     * @return Components|array
+     * @return iterable<JaneSchema|Reference>
      * @throws Exception
      */
     private function getComponentSchemas(OpenApi $openApiSpec)
@@ -135,7 +137,7 @@ class Builder
         if ($components === null) {
             $this->noResolvableComponents();
         }
-        return $components->getSchemas() ?: [];
+        return $components->getSchemas();
     }
 
     private function getEntity(
@@ -237,6 +239,9 @@ class Builder
         $this->registry->linkTable($entity, $this->database, $table);
     }
 
+    /**
+     * @return array<string, array<int, mixed>>
+     */
     private function getSchemaConfiguration(): array
     {
         $this->logger->debug('Compiling registry to schema configuration', [

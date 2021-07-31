@@ -1,5 +1,6 @@
 <?php
 
+use Cycle\Schema\Definition\Field;
 use Cycle\Schema\Table\Column;
 use Elazar\Phanua\Field\ColumnResolverInterface;
 use Elazar\Phanua\Field\Exception;
@@ -17,7 +18,7 @@ function getPrimaryResolver(bool $return = false): PrimaryResolverInterface
     return $primaryResolver;
 }
 
-function getTypeResolver($type = 'string')
+function getTypeResolver(?string $type = 'string'): TypeResolverInterface
 {
     $typeResolver = mock(TypeResolverInterface::class);
     $typeResolver
@@ -43,6 +44,8 @@ it('resolves a field name', function (bool $primary) {
     );
 
     $field = $resolver->getField('foo', 'bar', new Schema());
+    expect($field)->toBeInstanceOf(Field::class);
+    /** @var Field $field */
     expect($field->getColumn())->toBe('bar');
     expect($field->isPrimary())->toBe($primary);
     expect($field->getType())->toBe('string');
@@ -61,10 +64,14 @@ it('resolves a default value', function () {
 
     $schema = new Schema();
     $field = $resolver->getField('foo', 'bar', $schema);
+    expect($field)->toBeInstanceOf(Field::class);
+    /** @var Field $field */
     expect($field->getOptions()->has(Column::OPT_DEFAULT))->toBeFalse();
 
     $schema->setDefault(1);
     $field = $resolver->getField('foo', 'bar', $schema);
+    expect($field)->toBeInstanceOf(Field::class);
+    /** @var Field $field */
     expect($field->getOptions()->has(Column::OPT_DEFAULT))->toBeTrue();
     expect($field->getOptions()->get(Column::OPT_DEFAULT))->toBe(1);
 });
@@ -78,10 +85,14 @@ it('resolves a nullable status', function () {
 
     $schema = new Schema();
     $field = $resolver->getField('foo', 'bar', $schema);
+    expect($field)->toBeInstanceOf(Field::class);
+    /** @var Field $field */
     expect($field->getOptions()->get(Column::OPT_NULLABLE))->toBeFalse();
 
     $schema->setNullable(true);
     $field = $resolver->getField('foo', 'bar', $schema);
+    expect($field)->toBeInstanceOf(Field::class);
+    /** @var Field $field */
     expect($field->getOptions()->get(Column::OPT_NULLABLE))->toBeTrue();
 });
 

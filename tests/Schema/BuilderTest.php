@@ -14,7 +14,8 @@ use Elazar\Phanua\Field\FieldResolverInterface;
 use Elazar\Phanua\Field\NameResolverInterface;
 use Elazar\Phanua\Field\PrimaryResolverInterface;
 use Elazar\Phanua\Schema\Builder;
-use Elazar\Phanua\Schema\Exception;
+use Elazar\Phanua\Schema\Exception as SchemaException;
+use Elazar\Phanua\Service\Exception as ServiceException;
 use Elazar\Phanua\Service\Provider;
 
 use Jane\Component\OpenApi3\JsonSchema\Model\OpenApi;
@@ -49,6 +50,9 @@ function getFieldResolver(callable $callback): FieldResolverInterface
     return $fieldResolver;
 }
 
+/**
+ * @return array<string, mixed>
+ */
 function getDatabaseConfig(): array
 {
     return [
@@ -84,8 +88,34 @@ function getMinimalProvider(Provider $provider): Provider
 
 function getModifiedOpenApiSpec(callable $callback): string
 {
-    $rawSpec = json_decode(file_get_contents(PETSTORE_JSON_SPEC_PATH));
+    $rawContents = file_get_contents(PETSTORE_JSON_SPEC_PATH);
+    if ($rawContents === false) {
+        throw new RuntimeException(
+            sprintf(
+                'Failed to read file: %s',
+                PETSTORE_JSON_SPEC_PATH
+            )
+        );
+    }
+    $rawSpec = json_decode($rawContents);
+    if ($rawSpec === false) {
+        throw new RuntimeException(
+            sprintf(
+                'Failed to decode file %s: error %s (see https://php.net/json_last_error)',
+                PETSTORE_JSON_SPEC_PATH,
+                json_last_error()
+            )
+        );
+    }
     $contents = json_encode($callback($rawSpec));
+    if ($contents === false) {
+        throw new \RuntimeException(
+            sprintf(
+                'Failed to encode JSON: error %s (see https://php.net/json_last_error)',
+                json_last_error()
+            )
+        );
+    }
     return createTempFile($contents);
 }
 
@@ -133,7 +163,10 @@ it('fails to load without a namespace', function () {
         );
     getSchemaBuilder($provider);
 })
-->throws(TypeError::class);
+->throws(
+    ServiceException::class,
+    'No namespace provided for generated Jane model files'
+);
 
 it('fails to load without default dependencies', function ($key) {
     $container = $this->provider
@@ -170,7 +203,7 @@ it('fails to build a specification without components', function () {
     buildSchema($provider, $openApiSpecPath);
 })
 ->throws(
-    Exception::class,
+    SchemaException::class,
     'No resolvable components in OpenAPI specification'
 );
 
@@ -180,7 +213,7 @@ it('fails to build a specification with no resolvable components', function () {
     buildSchema($provider);
 })
 ->throws(
-    Exception::class,
+    SchemaException::class,
     'No resolvable components in OpenAPI specification'
 );
 
@@ -190,7 +223,7 @@ it('fails to build a specification if an expected primary key is missing', funct
         ->withDatabaseConfig(getDatabaseConfig());
     buildSchema($provider);
 })
-->throws(Exception::class);
+->throws(SchemaException::class);
 
 it('builds a schema with required configuration', function () {
     $provider = getMinimalProvider($this->provider);

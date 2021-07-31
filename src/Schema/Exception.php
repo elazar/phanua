@@ -15,7 +15,7 @@ class Exception extends BaseException
     public const CODE_NO_PRIMARY_KEY = 3;
 
     /**
-     * @param CouldNotParseException|OpenApiVersionSupportException $e
+     * @param CouldNotParseException|OpenApiVersionSupportException $previous
      */
     public static function openApiSpecParsingFailed(string $openApiSpecPathNotSet, \Exception $previous): self
     {

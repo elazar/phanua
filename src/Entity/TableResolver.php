@@ -12,6 +12,10 @@ class TableResolver implements TableResolverInterface
         Schema $componentSchema,
         Entity $entity
     ): string {
-        return $entity->getRole();
+        $role = $entity->getRole();
+        if ($role === null) {
+            throw Exception::tableResolutionFailed($componentName);
+        }
+        return $role;
     }
 }
