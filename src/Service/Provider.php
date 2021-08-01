@@ -210,11 +210,9 @@ class Provider implements ServiceProviderInterface
      */
     public function withJaneConfiguration($config): self
     {
-        // @codeCoverageIgnoreStart
         if (is_string($config)) {
             $config = require $config;
         }
-        // @codeCoverageIgnoreEnd
 
         $modified = clone $this;
 
@@ -238,8 +236,49 @@ class Provider implements ServiceProviderInterface
      */
     public function register(Container $c)
     {
-        // cycle/orm
+        $this->registerCycleOrm($c);
+        $this->registerCycleSchemaBuilder($c);
+        $this->registerPhanua($c);
+        $this->registerJane($c);
+        $this->registerPsrLogger($c);
+        $this->registerSymfonySerializer($c);
+        $this->registerOverrides($c);
+    }
 
+    /**
+     * Returns the Phanua schema builder used to generate a Cycle ORM schema
+     * from an OpenAPI 3 specification.
+     */
+    public function getSchemaBuilder(): SchemaBuilder
+    {
+        return $this->getContainer()[SchemaBuilder::class];
+    }
+
+    /**
+     * Returns the Pimple container used internally by Phanua.
+     *
+     * @see https://github.com/silexphp/Pimple#usage
+     */
+    public function getContainer(): Container
+    {
+        $container = new Container();
+        $this->register($container);
+        return $container;
+    }
+
+    /**
+     * Returns a PSR-11 compatible instance of the Pimple container used
+     * internally by Phanua.
+     *
+     * @see https://www.php-fig.org/psr/psr-11/
+     */
+    public function getPsrContainer(): ContainerInterface
+    {
+        return new PsrContainer($this->getContainer());
+    }
+
+    private function registerCycleOrm(Container $c): void
+    {
         $c[DatabaseConfig::class] =
             fn () => new DatabaseConfig($this->getDatabaseConfig());
 
@@ -254,17 +293,19 @@ class Provider implements ServiceProviderInterface
 
         $c[ORM::class] =
             fn () => new ORM($c[FactoryInterface::class]);
+    }
 
-        // cycle/schema-builder
-
+    private function registerCycleSchemaBuilder(Container $c): void
+    {
         $c[Compiler::class] =
             fn () => new Compiler();
 
         $c[Registry::class] =
             fn () => new Registry($c[DatabaseProviderInterface::class]);
+    }
 
-        // elazar/phanua
-
+    private function registerPhanua(Container $c): void
+    {
         $c[ClassResolverInterface::class] =
             fn () => $c[ClassResolver::class];
 
@@ -336,27 +377,31 @@ class Provider implements ServiceProviderInterface
 
         $c[TypeResolverInterface::class] =
             fn () => $c[TypeResolver::class];
+    }
 
-        // jane-php/json-schema
-
+    private function registerJane(Container $c): void
+    {
         $c[JaneObjectNormalizer::class] =
             fn () => new JaneObjectNormalizer();
 
         $c[Naming::class] =
             fn () => new Naming();
 
-        // jane-php/open-api-3
-
         $c[SchemaParser::class] =
             fn () => new SchemaParser($c[SerializerInterface::class]);
+    }
 
-        // psr/log
-
+    private function registerPsrLogger(Container $c): void
+    {
         $c[LoggerInterface::class] =
+            fn () => $c[NullLogger::class];
+
+        $c[NullLogger::class] =
             fn () => new NullLogger();
+    }
 
-        // symfony/serializer
-
+    private function registerSymfonySerializer(Container $c): void
+    {
         $c[ArrayDenormalizer::class] =
             fn () => new ArrayDenormalizer();
 
@@ -364,6 +409,9 @@ class Provider implements ServiceProviderInterface
             fn () => new JsonEncoder();
 
         $c[SerializerInterface::class] =
+            fn () => $c[Serializer::class];
+
+        $c[Serializer::class] =
             fn () => new Serializer(
                 [
                     $c[ArrayDenormalizer::class],
@@ -377,9 +425,10 @@ class Provider implements ServiceProviderInterface
 
         $c[YamlEncoder::class] =
             fn () => new YamlEncoder();
+    }
 
-        // Overrides
-
+    private function registerOverrides(Container $c): void
+    {
         if ($this->delegateContainer === null) {
             return;
         }
@@ -391,37 +440,5 @@ class Provider implements ServiceProviderInterface
         foreach ($overrides as $key) {
             $c[$key] = $this->delegateContainer->get($key);
         }
-    }
-
-    /**
-     * Returns the Phanua schema builder used to generate a Cycle ORM schema
-     * from an OpenAPI 3 specification.
-     */
-    public function getSchemaBuilder(): SchemaBuilder
-    {
-        return $this->getContainer()[SchemaBuilder::class];
-    }
-
-    /**
-     * Returns the Pimple container used internally by Phanua.
-     *
-     * @see https://github.com/silexphp/Pimple#usage
-     */
-    public function getContainer(): Container
-    {
-        $container = new Container();
-        $this->register($container);
-        return $container;
-    }
-
-    /**
-     * Returns a PSR-11 compatible instance of the Pimple container used
-     * internally by Phanua.
-     *
-     * @see https://www.php-fig.org/psr/psr-11/
-     */
-    public function getPsrContainer(): ContainerInterface
-    {
-        return new PsrContainer($this->getContainer());
     }
 }

@@ -133,7 +133,7 @@ it('accepts a property filter', function () {
     expect($propertyFilter)->toBe($expected);
 });
 
-it('accepts Jane configuration', function () {
+it('accepts Jane configuration as an array', function () {
     $provider = $this->provider->withJaneConfiguration([]);
     expect($provider)->toEqualCanonicalizing($this->provider);
 
@@ -150,8 +150,23 @@ it('accepts Jane configuration', function () {
         'openapi-file' => $openApiFile,
         'namespace' => $namespace,
     ]);
-    expect($provider->getOpenApiSpecPath())->toBe($openApiFile);
     expect($provider->getNamespace())->toBe($namespace);
+    expect($provider->getOpenApiSpecPath())->toBe($openApiFile);
+});
+
+it('accepts Jane configuration as a file', function () {
+    $openApiFile = 'path/to/spec.yaml';
+    $namespace = '\\Foo';
+    $config = [
+        'openapi-file' => $openApiFile,
+        'namespace' => $namespace,
+    ];
+    $code = '<?php return ' . var_export($config, true) . ';';
+    $file = createTempFile($code);
+
+    $provider = $this->provider->withJaneConfiguration($file);
+    expect($provider->getNamespace())->toBe($namespace);
+    expect($provider->getOpenApiSpecPath())->toBe($openApiFile);
 });
 
 it('registers dependencies in a container', function () {
